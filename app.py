@@ -1,9 +1,24 @@
 #!flask/bin/python
 
+# Website for Tutorial: https://blog.miguelgrinberg.com/post/designing-a-restful-api-with-python-and-flask
+
 from flask import Flask, jsonify, make_response, request, url_for
 from werkzeug.exceptions import abort
+from flask.ext.httpauth import HTTPBasicAuth
+auth = HTTPBasicAuth()
 
 app = Flask(__name__)
+
+@auth.get_password
+def get_password(username):
+    if username == 'miguel':
+        return 'python'
+    return None
+
+
+@auth.error_handler
+def unauthorized():
+    return make_response(jsonify({'error': 'Unauthorized Access'}), 401)
 
 tasks = [
     {
@@ -32,6 +47,7 @@ def make_public_task(task):
 
 
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
+@auth.login_required
 def get_tasks():
     return jsonify({'tasks': [make_public_task(task) for task in tasks]})
 
